@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react-swc'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/Candle-Wish/',
+  base: '/candle-wish/',
   build: {
     outDir: 'docs',      // build into docs/ so Pages can serve it
     emptyOutDir: true
