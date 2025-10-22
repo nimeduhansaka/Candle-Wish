@@ -114,18 +114,25 @@ const BirthdayCandleApp = () => {
     };
 
     // Unlock Web Audio on first user gesture (iOS/Chrome autoplay policies)
+    // Unlock Web Audio on first user gesture (autoplay/iOS)
     useEffect(() => {
-        const handler = () => {
+        const unlock = () => {
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
-            // If there is no context yet, create it here so it's born from a user gesture
+
+            // Reuse or create the slideshow context from a user gesture
             if (!slideCtxRef.current) {
                 slideCtxRef.current = new AudioCtx();
             }
-            // Resume if suspended
-            if (slideCtxRef.current.state === 'suspended') {
+            if (slideCtxRef.current?.state === 'suspended') {
                 slideCtxRef.current.resume().catch(() => {});
             }
-            // Play a 1-frame silent buffer to fully unlock audio on iOS
+
+            // Also resume the mic context if it exists (optional but helps avoid warnings)
+            if (audioContextRef.current?.state === 'suspended') {
+                audioContextRef.current.resume().catch(() => {});
+            }
+
+            // Play a 1-frame silent buffer to fully unlock on iOS
             try {
                 const buf = slideCtxRef.current.createBuffer(1, 1, 22050);
                 const src = slideCtxRef.current.createBufferSource();
@@ -135,8 +142,9 @@ const BirthdayCandleApp = () => {
             } catch {}
         };
 
-        window.addEventListener('pointerdown', handler, { once: true });
-        return () => window.removeEventListener('pointerdown', handler);
+        // Prefer pointerdown; add click as a fallback if you want
+        window.addEventListener('pointerdown', unlock, { once: true });
+        return () => window.removeEventListener('pointerdown', unlock);
     }, []);
 
 
@@ -151,14 +159,18 @@ const BirthdayCandleApp = () => {
         // masterGain.gain.value = 0.06; // soft but audible
         // masterGain.connect(ctx.destination);
 
+        // If a note is already scheduled, it's already playing
         if (slideNodesRef.current?.timeoutId) return;
 
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         const ctx = slideCtxRef.current || new AudioCtx(); // reuse unlocked context if present
         slideCtxRef.current = ctx;
 
+        // Ensure the context is running (user gesture should have unlocked it)
+        try { if (ctx.state === 'suspended') await ctx.resume(); } catch {}
+
         const masterGain = ctx.createGain();
-        masterGain.gain.value = 0.06;
+        masterGain.gain.value = 0.06; // your existing value
         masterGain.connect(ctx.destination);
 
 
@@ -214,24 +226,51 @@ const BirthdayCandleApp = () => {
         playNext();
     };
 
+    // const stopBirthdayMelody = async () => {
+    //     const ctx = slideCtxRef.current;
+    //     const nodes = slideNodesRef.current;
+    //     try { if (nodes?.timeoutId) clearTimeout(nodes.timeoutId); } catch {}
+    //     slideNodesRef.current = null;
+    //     if (ctx) { try { await ctx.close(); } catch {} }
+    //     slideCtxRef.current = null;
+    // };
     const stopBirthdayMelody = async () => {
         const ctx = slideCtxRef.current;
         const nodes = slideNodesRef.current;
-        try { if (nodes?.timeoutId) clearTimeout(nodes.timeoutId); } catch {}
+
+        // Clear any scheduled note
+        if (nodes?.timeoutId) {
+            try { clearTimeout(nodes.timeoutId); } catch {}
+        }
         slideNodesRef.current = null;
-        if (ctx) { try { await ctx.close(); } catch {} }
+
+        // Only close if it exists and isn't already closed
+        if (ctx && ctx.state !== 'closed') {
+            try { await ctx.close(); } catch {}
+        }
         slideCtxRef.current = null;
     };
 
+
     // Start/stop slideshow music based on state
+    // useEffect(() => {
+    //     if (blown && !showMessage) {
+    //         startBirthdayMelody();
+    //     } else {
+    //         stopBirthdayMelody();
+    //     }
+    //     return () => { stopBirthdayMelody(); };
+    // }, [blown, showMessage]);
     useEffect(() => {
         if (blown && !showMessage) {
             startBirthdayMelody();
+            return () => { stopBirthdayMelody(); }; // cleanup when deps change away from this state
         } else {
-            stopBirthdayMelody();
+            stopBirthdayMelody(); // stop if we’re not in the playing state
+            return; // no cleanup needed (we just stopped)
         }
-        return () => { stopBirthdayMelody(); };
     }, [blown, showMessage]);
+
 
     // --- Slideshow logic ---
     useEffect(() => {
