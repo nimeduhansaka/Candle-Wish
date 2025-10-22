@@ -7,10 +7,11 @@ const BirthdayCandleApp = () => {
     const [currentImage, setCurrentImage] = useState(0); // Tracks which image is showing in slideshow
     const [micError, setMicError] = useState(false); // Handles mic permission or access issues
 
-    // Array of slideshow image paths
+    // Array of slideshow image paths (respect Vite base path)
+    const base = import.meta.env.BASE_URL || '/';
     const IMAGES = [
-        '/images/image1.jpg', '/images/image2.jpg', '/images/image3.jpg', '/images/image4.jpg', '/images/image5.jpg',
-        '/images/image6.jpg', '/images/image7.jpg', '/images/image8.jpg', '/images/image9.jpg', '/images/image10.jpg'
+        `${base}images/image1.jpg`, `${base}images/image2.jpg`, `${base}images/image3.jpg`, `${base}images/image4.jpg`, `${base}images/image5.jpg`,
+        `${base}images/image6.jpg`, `${base}images/image7.jpg`, `${base}images/image8.jpg`, `${base}images/image9.jpg`, `${base}images/image10.jpg`
     ];
 
     // Matching quotes for each image (10 total)
@@ -249,7 +250,7 @@ const BirthdayCandleApp = () => {
                   {/* Background image with subtle zoom */}
                   <div
                     className="absolute inset-0 bg-cover bg-center will-change-transform "
-                    style={{ backgroundImage: "url('/images/imagebg.jpg')" }}
+                    style={{ backgroundImage: `url('${base}images/imagebg.jpg')` }}
                   />
                   {/* Colorful soft glows */}
                   <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_10%,rgba(255,182,193,0.35),transparent_60%),radial-gradient(circle_at_80%_30%,rgba(147,197,253,0.25),transparent_55%),radial-gradient(circle_at_50%_80%,rgba(255,221,110,0.25),transparent_50%)]" />
