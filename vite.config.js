@@ -6,7 +6,7 @@ import react from '@vitejs/plugin-react-swc'
 export default defineConfig({
   base: '/candle-wish/',
   build: {
-    outDir: 'dist',      // build into docs/ so Pages can serve it
+    outDir: 'docs',      // build into docs/ so Pages can serve it
     emptyOutDir: true
   },
   plugins: [tailwindcss(),react()],
