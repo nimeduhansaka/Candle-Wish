@@ -239,8 +239,8 @@ const BirthdayCandleApp = () => {
                 // Slideshow display after blowing candle
                 <div className="absolute inset-0">
                     <img src={IMAGES[currentImage]} alt="slideshow" className="object-cover w-full h-full animate-fade" />
-                    {/* Glass quote overlay - mobile friendly */}
-                    <div className="pointer-events-none absolute inset-x-2 sm:inset-x-auto bottom-3 sm:bottom-6 left-auto sm:left-1/2 sm:-translate-x-1/2 w-auto sm:w-[92%] max-w-none sm:max-w-3xl">
+                    {/* Glass quote overlay - mobile friendly (moved to top) */}
+                    <div className="pointer-events-none absolute inset-x-2 sm:inset-x-auto top-3 sm:top-6 left-auto sm:left-1/2 sm:-translate-x-1/2 w-auto sm:w-[92%] max-w-none sm:max-w-3xl">
                         <div className="bg-black/35 sm:bg-white/12 backdrop-blur-md border border-white/20 sm:border-white/25 shadow-[0_10px_30px_rgba(0,0,0,0.45)] rounded-lg sm:rounded-xl px-3 sm:px-6 py-2.5 sm:py-4">
                             <p className="text-center text-[13px] leading-tight sm:text-base sm:leading-snug md:text-lg text-white/95">
                                 {QUOTES[currentImage]}
