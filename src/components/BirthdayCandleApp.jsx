@@ -113,16 +113,54 @@ const BirthdayCandleApp = () => {
         }
     };
 
+    // Unlock Web Audio on first user gesture (iOS/Chrome autoplay policies)
+    useEffect(() => {
+        const handler = () => {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            // If there is no context yet, create it here so it's born from a user gesture
+            if (!slideCtxRef.current) {
+                slideCtxRef.current = new AudioCtx();
+            }
+            // Resume if suspended
+            if (slideCtxRef.current.state === 'suspended') {
+                slideCtxRef.current.resume().catch(() => {});
+            }
+            // Play a 1-frame silent buffer to fully unlock audio on iOS
+            try {
+                const buf = slideCtxRef.current.createBuffer(1, 1, 22050);
+                const src = slideCtxRef.current.createBufferSource();
+                src.buffer = buf;
+                src.connect(slideCtxRef.current.destination);
+                src.start(0);
+            } catch {}
+        };
+
+        window.addEventListener('pointerdown', handler, { once: true });
+        return () => window.removeEventListener('pointerdown', handler);
+    }, []);
+
+
     // --- Sound: birthday melody during slideshow ---
     const startBirthdayMelody = async () => {
-        if (slideCtxRef.current) return; // already running
+        // if (slideCtxRef.current) return; // already running
+        // const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        // const ctx = new AudioCtx();
+        // slideCtxRef.current = ctx;
+        //
+        // const masterGain = ctx.createGain();
+        // masterGain.gain.value = 0.06; // soft but audible
+        // masterGain.connect(ctx.destination);
+
+        if (slideNodesRef.current?.timeoutId) return;
+
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        const ctx = new AudioCtx();
+        const ctx = slideCtxRef.current || new AudioCtx(); // reuse unlocked context if present
         slideCtxRef.current = ctx;
 
         const masterGain = ctx.createGain();
-        masterGain.gain.value = 0.06; // soft but audible
+        masterGain.gain.value = 0.06;
         masterGain.connect(ctx.destination);
+
 
         // Frequencies for notes
         const N = {
@@ -235,10 +273,10 @@ const BirthdayCandleApp = () => {
                 // Slideshow display after blowing candle
                 <div className="absolute inset-0">
                     <img src={IMAGES[currentImage]} alt="slideshow" className="object-cover w-full h-full animate-fade" />
-                    {/* Glass quote overlay */}
-                    <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-3xl">
-                        <div className="bg-white/12 backdrop-blur-md border border-white/25 shadow-[0_10px_30px_rgba(0,0,0,0.35)] rounded-xl px-4 sm:px-6 py-3 sm:py-4">
-                            <p className="text-center text-sm sm:text-base md:text-lg text-white/95 leading-snug">
+                    {/* Glass quote overlay - mobile friendly */}
+                    <div className="pointer-events-none absolute inset-x-2 sm:inset-x-auto bottom-3 sm:bottom-6 left-auto sm:left-1/2 sm:-translate-x-1/2 w-auto sm:w-[92%] max-w-none sm:max-w-3xl">
+                        <div className="bg-black/35 sm:bg-white/12 backdrop-blur-md border border-white/20 sm:border-white/25 shadow-[0_10px_30px_rgba(0,0,0,0.45)] rounded-lg sm:rounded-xl px-3 sm:px-6 py-2.5 sm:py-4">
+                            <p className="text-center text-[13px] leading-tight sm:text-base sm:leading-snug md:text-lg text-white/95">
                                 {QUOTES[currentImage]}
                             </p>
                         </div>
