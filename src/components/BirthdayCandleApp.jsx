@@ -113,40 +113,6 @@ const BirthdayCandleApp = () => {
         }
     };
 
-    // Unlock Web Audio on first user gesture (iOS/Chrome autoplay policies)
-    // Unlock Web Audio on first user gesture (autoplay/iOS)
-    useEffect(() => {
-        const unlock = () => {
-            const AudioCtx = window.AudioContext || window.webkitAudioContext;
-
-            // Reuse or create the slideshow context from a user gesture
-            if (!slideCtxRef.current) {
-                slideCtxRef.current = new AudioCtx();
-            }
-            if (slideCtxRef.current?.state === 'suspended') {
-                slideCtxRef.current.resume().catch(() => {});
-            }
-
-            // Also resume the mic context if it exists (optional but helps avoid warnings)
-            if (audioContextRef.current?.state === 'suspended') {
-                audioContextRef.current.resume().catch(() => {});
-            }
-
-            // Play a 1-frame silent buffer to fully unlock on iOS
-            try {
-                const buf = slideCtxRef.current.createBuffer(1, 1, 22050);
-                const src = slideCtxRef.current.createBufferSource();
-                src.buffer = buf;
-                src.connect(slideCtxRef.current.destination);
-                src.start(0);
-            } catch {}
-        };
-
-        // Prefer pointerdown; add click as a fallback if you want
-        window.addEventListener('pointerdown', unlock, { once: true });
-        return () => window.removeEventListener('pointerdown', unlock);
-    }, []);
-
 
     // --- Sound: birthday melody during slideshow ---
     const startBirthdayMelody = async () => {
