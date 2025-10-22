@@ -150,27 +150,13 @@ const BirthdayCandleApp = () => {
 
     // --- Sound: birthday melody during slideshow ---
     const startBirthdayMelody = async () => {
-        // if (slideCtxRef.current) return; // already running
-        // const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        // const ctx = new AudioCtx();
-        // slideCtxRef.current = ctx;
-        //
-        // const masterGain = ctx.createGain();
-        // masterGain.gain.value = 0.06; // soft but audible
-        // masterGain.connect(ctx.destination);
-
-        // If a note is already scheduled, it's already playing
-        if (slideNodesRef.current?.timeoutId) return;
-
+        if (slideCtxRef.current) return; // already running
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        const ctx = slideCtxRef.current || new AudioCtx(); // reuse unlocked context if present
+        const ctx = new AudioCtx();
         slideCtxRef.current = ctx;
 
-        // Ensure the context is running (user gesture should have unlocked it)
-        try { if (ctx.state === 'suspended') await ctx.resume(); } catch {}
-
         const masterGain = ctx.createGain();
-        masterGain.gain.value = 0.06; // your existing value
+        masterGain.gain.value = 0.06; // soft but audible
         masterGain.connect(ctx.destination);
 
 
@@ -226,49 +212,24 @@ const BirthdayCandleApp = () => {
         playNext();
     };
 
-    // const stopBirthdayMelody = async () => {
-    //     const ctx = slideCtxRef.current;
-    //     const nodes = slideNodesRef.current;
-    //     try { if (nodes?.timeoutId) clearTimeout(nodes.timeoutId); } catch {}
-    //     slideNodesRef.current = null;
-    //     if (ctx) { try { await ctx.close(); } catch {} }
-    //     slideCtxRef.current = null;
-    // };
     const stopBirthdayMelody = async () => {
         const ctx = slideCtxRef.current;
         const nodes = slideNodesRef.current;
-
-        // Clear any scheduled note
-        if (nodes?.timeoutId) {
-            try { clearTimeout(nodes.timeoutId); } catch {}
-        }
+        try { if (nodes?.timeoutId) clearTimeout(nodes.timeoutId); } catch {}
         slideNodesRef.current = null;
-
-        // Only close if it exists and isn't already closed
-        if (ctx && ctx.state !== 'closed') {
-            try { await ctx.close(); } catch {}
-        }
+        if (ctx) { try { await ctx.close(); } catch {} }
         slideCtxRef.current = null;
     };
 
 
     // Start/stop slideshow music based on state
-    // useEffect(() => {
-    //     if (blown && !showMessage) {
-    //         startBirthdayMelody();
-    //     } else {
-    //         stopBirthdayMelody();
-    //     }
-    //     return () => { stopBirthdayMelody(); };
-    // }, [blown, showMessage]);
     useEffect(() => {
         if (blown && !showMessage) {
             startBirthdayMelody();
-            return () => { stopBirthdayMelody(); }; // cleanup when deps change away from this state
         } else {
-            stopBirthdayMelody(); // stop if we’re not in the playing state
-            return; // no cleanup needed (we just stopped)
+            stopBirthdayMelody();
         }
+        return () => { stopBirthdayMelody(); };
     }, [blown, showMessage]);
 
 
